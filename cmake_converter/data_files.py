@@ -28,7 +28,11 @@
 
 import os
 import sys
-from lxml import etree
+
+try:
+    from lxml import etree
+except Exception:
+    print("Oh no, cannot import etree from lxml")
 
 from cmake_converter.utils import message, get_actual_filename, set_native_slash
 
