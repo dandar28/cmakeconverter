@@ -300,9 +300,9 @@ class VSSolutionConverter(DataConverter):
         self.clean_cmake_lists_file(context, context.solution_path, cmake_lists_set)
         print('\n')
 
-    def convert_solution(self, project_context, sln_file_path):
+    def parse_solution_and_init_project_context(self, project_context, sln_file_path):
         """
-        Routine converts Visual studio solution into set of CMakeLists.txt scripts
+        Parse solution file data and initialize project context with the passed solution
         """
 
         message(
@@ -317,19 +317,33 @@ class VSSolutionConverter(DataConverter):
         project_context.solution_path = os.path.dirname(sln_file_path)
         project_context.project_name = os.path.splitext(os.path.basename(sln_file_path))[0]
         project_context.vcxproj_path = sln_file_path
-        subdirectories_set = set()
-        subdirectories_to_target_name = {}
-        sln_projects_data = solution_data['sln_projects_data']
+        return solution_data
 
+    def clean_solution_cmake_lists(self, project_context, solution_data):
+        sln_projects_data = solution_data['sln_projects_data']
         self.clean_cmake_lists_of_solution(project_context, sln_projects_data)
 
+    def get_solution_input_data_for_converter(self, project_context, solution_data):
+        sln_projects_data = solution_data['sln_projects_data']
         input_data_for_converter = self.__get_input_data_for_converter(
             project_context,
             sln_projects_data
         )
+        return input_data_for_converter
+
+    def convert_solution(self, project_context, sln_file_path):
+        """
+        Routine converts Visual studio solution into set of CMakeLists.txt scripts
+        """
+
+        solution_data = parse_solution_and_init_project_context(project_context, sln_file_path)
+        clean_solution_cmake_lists(project_context, solution_data)
+        input_data_for_converter = get_solution_input_data_for_converter(project_context, solution_data)
 
         results = self.do_conversion(project_context, input_data_for_converter)
-
+        
+        subdirectories_set = set()
+        subdirectories_to_target_name = {}
         self.__get_info_from_results(
             project_context,
             results,
